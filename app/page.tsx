@@ -3,21 +3,25 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import MarkdownEditor from '@/components/MarkdownEditor';
-import { JournalEntry } from '@/types/journal';
+import { JournalEntry, Folder } from '@/types/journal';
 import { storage } from '@/lib/storage';
 
 export default function Home() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [currentTitle, setCurrentTitle] = useState('');
   const [currentContent, setCurrentContent] = useState('');
   const [mounted, setMounted] = useState(false);
 
-  // Load entries from localStorage on mount
+  // Load entries and folders from localStorage on mount
   useEffect(() => {
     setMounted(true);
     const loadedEntries = storage.getEntries();
+    const loadedFolders = storage.getFolders();
     setEntries(loadedEntries);
+    setFolders(loadedFolders);
 
     // Select the most recent entry if available
     if (loadedEntries.length > 0) {
@@ -27,6 +31,7 @@ export default function Home() {
       setSelectedId(mostRecent.id);
       setCurrentTitle(mostRecent.title);
       setCurrentContent(mostRecent.content);
+      setSelectedFolderId(mostRecent.folderId || null);
     }
   }, []);
 
@@ -58,6 +63,7 @@ export default function Home() {
       id: storage.generateId(),
       title: '',
       content: '',
+      folderId: selectedFolderId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -74,6 +80,7 @@ export default function Home() {
       setSelectedId(id);
       setCurrentTitle(entry.title);
       setCurrentContent(entry.content);
+      setSelectedFolderId(entry.folderId || null);
     }
   };
 
@@ -93,6 +100,31 @@ export default function Home() {
     }
   };
 
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: storage.generateId(),
+      name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    storage.saveFolder(newFolder);
+    setFolders(prev => [...prev, newFolder]);
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    storage.deleteFolder(id);
+    setFolders(prev => prev.filter(f => f.id !== id));
+
+    // If the deleted folder was selected, switch to "All Entries"
+    if (selectedFolderId === id) {
+      setSelectedFolderId(null);
+    }
+  };
+
+  const handleSelectFolder = (id: string | null) => {
+    setSelectedFolderId(id);
+  };
+
   if (!mounted) {
     return null; // Prevent hydration mismatch
   }
@@ -101,10 +133,15 @@ export default function Home() {
     <div className="flex h-screen bg-white">
       <Sidebar
         entries={entries}
+        folders={folders}
         selectedId={selectedId}
+        selectedFolderId={selectedFolderId}
         onSelect={handleSelectEntry}
         onNew={handleNewEntry}
         onDelete={handleDeleteEntry}
+        onCreateFolder={handleCreateFolder}
+        onDeleteFolder={handleDeleteFolder}
+        onSelectFolder={handleSelectFolder}
       />
       <main className="flex-1 overflow-hidden">
         {selectedId ? (

@@ -1,13 +1,73 @@
-import { JournalEntry } from '@/types/journal';
+import { JournalEntry, Folder } from '@/types/journal';
 
-const STORAGE_KEY = 'journal_entries';
+const ENTRIES_KEY = 'journal_entries';
+const FOLDERS_KEY = 'journal_folders';
 
 export const storage = {
+  // Folder operations
+  getFolders(): Folder[] {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      const data = localStorage.getItem(FOLDERS_KEY);
+      if (!data) return [];
+
+      const folders = JSON.parse(data);
+      return folders.map((folder: any) => ({
+        ...folder,
+        createdAt: new Date(folder.createdAt),
+        updatedAt: new Date(folder.updatedAt),
+      }));
+    } catch (error) {
+      console.error('Error reading folders from localStorage:', error);
+      return [];
+    }
+  },
+
+  saveFolder(folder: Folder): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const folders = this.getFolders();
+      const existingIndex = folders.findIndex(f => f.id === folder.id);
+
+      if (existingIndex >= 0) {
+        folders[existingIndex] = folder;
+      } else {
+        folders.push(folder);
+      }
+
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+    } catch (error) {
+      console.error('Error saving folder to localStorage:', error);
+    }
+  },
+
+  deleteFolder(id: string): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const folders = this.getFolders();
+      const filtered = folders.filter(f => f.id !== id);
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(filtered));
+
+      // Move entries from this folder to root
+      const entries = this.getEntries();
+      const updated = entries.map(e =>
+        e.folderId === id ? { ...e, folderId: null } : e
+      );
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(updated));
+    } catch (error) {
+      console.error('Error deleting folder from localStorage:', error);
+    }
+  },
+
+  // Entry operations
   getEntries(): JournalEntry[] {
     if (typeof window === 'undefined') return [];
 
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(ENTRIES_KEY);
       if (!data) return [];
 
       const entries = JSON.parse(data);
@@ -36,7 +96,7 @@ export const storage = {
         entries.push(entry);
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
     } catch (error) {
       console.error('Error saving to localStorage:', error);
     }
@@ -48,7 +108,7 @@ export const storage = {
     try {
       const entries = this.getEntries();
       const filtered = entries.filter(e => e.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(filtered));
     } catch (error) {
       console.error('Error deleting from localStorage:', error);
     }
