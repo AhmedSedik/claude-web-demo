@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import SocialShareButtons from './SocialShareButtons';
 
 interface MarkdownEditorProps {
   value: string;
@@ -32,27 +33,30 @@ export default function MarkdownEditor({
       </div>
 
       {/* Toolbar */}
-      <div className="border-b border-gray-200 p-2 flex items-center gap-2 bg-gray-50">
-        <button
-          onClick={() => setIsPreview(false)}
-          className={`px-3 py-1 rounded text-sm transition-colors ${
-            !isPreview
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Write
-        </button>
-        <button
-          onClick={() => setIsPreview(true)}
-          className={`px-3 py-1 rounded text-sm transition-colors ${
-            isPreview
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Preview
-        </button>
+      <div className="border-b border-gray-200 p-4 flex items-center justify-between bg-gray-50">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsPreview(false)}
+            className={`px-3 py-1 rounded text-sm transition-colors ${
+              !isPreview
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Write
+          </button>
+          <button
+            onClick={() => setIsPreview(true)}
+            className={`px-3 py-1 rounded text-sm transition-colors ${
+              isPreview
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Preview
+          </button>
+        </div>
+        <SocialShareButtons title={title} content={value} />
       </div>
 
       {/* Editor/Preview Area */}
