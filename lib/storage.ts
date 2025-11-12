@@ -11,9 +11,10 @@ export const storage = {
       if (!data) return [];
 
       const entries = JSON.parse(data);
-      // Convert date strings back to Date objects
+      // Convert date strings back to Date objects and add default color for old entries
       return entries.map((entry: any) => ({
         ...entry,
+        color: entry.color || 'blue', // Default to blue for backward compatibility
         createdAt: new Date(entry.createdAt),
         updatedAt: new Date(entry.updatedAt),
       }));
