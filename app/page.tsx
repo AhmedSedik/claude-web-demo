@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import MarkdownEditor from '@/components/MarkdownEditor';
-import { JournalEntry, Folder } from '@/types/journal';
+import ColorPicker from '@/components/ColorPicker';
+import { JournalEntry, Folder, EntryColor } from '@/types/journal';
 import { storage } from '@/lib/storage';
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [currentTitle, setCurrentTitle] = useState('');
   const [currentContent, setCurrentContent] = useState('');
+  const [currentColor, setCurrentColor] = useState<EntryColor>('blue');
   const [mounted, setMounted] = useState(false);
 
   // Load entries and folders from localStorage on mount
@@ -32,10 +34,11 @@ export default function Home() {
       setCurrentTitle(mostRecent.title);
       setCurrentContent(mostRecent.content);
       setSelectedFolderId(mostRecent.folderId || null);
+      setCurrentColor(mostRecent.color);
     }
   }, []);
 
-  // Auto-save when content or title changes
+  // Auto-save when content, title, or color changes
   useEffect(() => {
     if (!mounted || !selectedId) return;
 
@@ -46,6 +49,7 @@ export default function Home() {
           ...entry,
           title: currentTitle,
           content: currentContent,
+          color: currentColor,
           updatedAt: new Date(),
         };
         storage.saveEntry(updatedEntry);
@@ -56,7 +60,7 @@ export default function Home() {
     }, 500); // Auto-save after 500ms of inactivity
 
     return () => clearTimeout(timeoutId);
-  }, [currentTitle, currentContent, selectedId, mounted, entries]);
+  }, [currentTitle, currentContent, currentColor, selectedId, mounted, entries]);
 
   const handleNewEntry = () => {
     const newEntry: JournalEntry = {
@@ -64,6 +68,7 @@ export default function Home() {
       title: '',
       content: '',
       folderId: selectedFolderId,
+      color: 'blue',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -72,6 +77,7 @@ export default function Home() {
     setSelectedId(newEntry.id);
     setCurrentTitle('');
     setCurrentContent('');
+    setCurrentColor('blue');
   };
 
   const handleSelectEntry = (id: string) => {
@@ -81,6 +87,7 @@ export default function Home() {
       setCurrentTitle(entry.title);
       setCurrentContent(entry.content);
       setSelectedFolderId(entry.folderId || null);
+      setCurrentColor(entry.color);
     }
   };
 
@@ -143,14 +150,19 @@ export default function Home() {
         onDeleteFolder={handleDeleteFolder}
         onSelectFolder={handleSelectFolder}
       />
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden flex flex-col">
         {selectedId ? (
-          <MarkdownEditor
-            value={currentContent}
-            onChange={setCurrentContent}
-            title={currentTitle}
-            onTitleChange={setCurrentTitle}
-          />
+          <>
+            <div className="flex-1 overflow-hidden">
+              <MarkdownEditor
+                value={currentContent}
+                onChange={setCurrentContent}
+                title={currentTitle}
+                onTitleChange={setCurrentTitle}
+              />
+            </div>
+            <ColorPicker selectedColor={currentColor} onChange={setCurrentColor} />
+          </>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-400">
             <div className="text-center">
